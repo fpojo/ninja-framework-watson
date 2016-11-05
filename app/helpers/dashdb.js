@@ -29,15 +29,15 @@ if (hasConnect == false) {
 var connString = "DRIVER={DB2};DATABASE=" + db2.db + ";UID=" + db2.username + ";PWD=" + db2.password + ";HOSTNAME=" + db2.hostname + ";port=" + db2.port;
 
 exports.select = async (function(params, callback){
-    return await(_select(params));
+    //return await(_select(params));
 });
 
 exports.saveLog = function (qid,values) {
-    _log(qid,values).then(function(result) {
-        return true;
-    }).catch(function Error(error) {
-        return false;
-    });
+    // _log(qid,values).then(function(result) {
+        // return true;
+    // }).catch(function Error(error) {
+        // return false;
+    // });
 };
 
 exports.mountParams = function (convResults, rrAnswer, isRR) {
@@ -61,7 +61,7 @@ function _log(qid,values) {
 
     var q = "INSERT INTO " + tabela + "(" + var_columns + ") VALUES (" + var_values + ");";
     //console.log(q);
-    return _executeQuery(q);
+    //return _executeQuery(q);
 }
 
 function _updateLog(params,callback) {
@@ -71,14 +71,14 @@ function _updateLog(params,callback) {
     var tabela = config.database.histtable;
 
     var q = "UPDATE " + tabela + " SET " + var_column + " = '" + valores + "' WHERE " + condition + ";";
-    _executeQuery(q);
+    //_executeQuery(q);
 }
 
 function _select(params){
     var cpf = params.user_cpf.replace(/^([0-9]{3})[\.]?([0-9]{3})[\.]?([0-9]{3})[-]?([0-9]{2})/, '$1.$2.$3-$4');
     var q = "SELECT " + params.type + " FROM WGOV_CRM WHERE CPF = '" + cpf + "'";
     var result = _executeQuery(q);
-    return result;
+    //return result;
 }
 
 function _executeQuery(query){

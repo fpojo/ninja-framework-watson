@@ -1,8 +1,6 @@
 var express = require('express');
 var request = require('request');
 var bodyParser = require('body-parser');
-var tbot = require('node-telegram-bot-api');
-var watson = require('watson-developer-cloud');
 
 var config 		 = require('./app/config/config');
 var lines 		 = require('./app/config/lines');
@@ -44,42 +42,37 @@ bot.on('attachment', function(userId, attachment){
 				var url = config.system.url + lines.urlErroAudio;
         		bot.sendAudioAttachment(userId, url);
 			}else{
-				bot.sendTextMessage(userId, "Entendi que você disse: " + resposta);
+				console.log("STT > " + JSON.stringify(resposta.toString()));
+				conversation.call(resposta.toString(),function(err,res){
+					console.log(JSON.stringify(res));
+					var url = config.system.url + "/tts/synthesize?text=" + encodeURI(res.output.text[0]);
+					bot.sendAudioAttachment(userId, url);
+					
+					//orquestrador(res, userId);
+				});
+				//bot.sendTextMessage(userId, "Entendi que você disse: " + resposta);
 			}
 		});	
     } else if (attachment[0].type == "image") {
-		console.log("ENTROU_02");
 		visualrecog.classificar(attachment[0].payload.url,function(err,res){
 			if(err || !res.images[0] || res.images[0].classifiers == undefined || res.images[0].classifiers == "undefined" || res.images[0].classifiers[0].classes == "undefined") 
 				bot.sendTextMessage(userId, "Não foi possível classificar essa imagem.");
 			else{
-				console.log("ENTROU_03");
 				var c_class = res.images[0].classifiers[0].classes[0].class;
-				var c_class2 = res.images[0].classifiers[0].classes[1].class;
-				console.log("Class > " + c_class);
-				console.log("Class2 > " + c_class);
-				if(c_class == "dog" || c_class == "animal"){
-					bot.sendTextMessage(userId, "Ah ta, sendo assim temos várias opções de acordo com a idade do seu cão... Por favor acesso o link para maiores informações: https://www.health4pet.com.br");
+
+				if(c_class == "stadium" || c_class == "sports"){
+					bot.sendTextMessage(userId, "sua mensagem");
 					bot.sendTextMessage(userId, "Você tem mais alguma dúvida?");
-				}else if(c_class == "car"){
-					bot.sendTextMessage(userId, "Humm, este não é um cãozinho, mas também temos várias opções de seguro para veículos. Confira na nossa página: http://www.portoseguro.com.br");
+				}else if(c_class == "beer"){
+					bot.sendTextMessage(userId, "sua mensagem");
 					bot.sendTextMessage(userId, "Posso te ajudar com mais alguma coisa?");
 				}else if(c_class == "animal"){
-					bot.sendTextMessage(userId, "//INSERIR MENSAGEM PRA ANIMAL GERAL");
+					bot.sendTextMessage(userId, "sua mensagem");
 					bot.sendTextMessage(userId, "Posso te ajudar com mais alguma coisa?");
 				}
 			}
 				
 		});
-	}
-});
-
-// Inicializa o bot do Telegram
-var telegramBot = new tbot(config.telegram.apikey, { polling: true });
-
-telegramBot.on('message', function (msg) {
-    if(msg['voice']){ 
-		return onVoiceMessage(msg); 
 	}
 });
 
@@ -116,49 +109,6 @@ function orquestrador(respostaJSON, userId) {
 			}
 		}
 	}
-}
-
-// POLUINDO O CODIGO PRA TESTE COM TELEGRAM ='(
-var speech_to_text = watson.speech_to_text({
-    version: 'v1',
-    username: config.speechtotext.username,
-    password: config.speechtotext.password
-});
-
-var params = {
-    model: 'pt-BR_BroadbandModel',
-    content_type: 'audio/ogg;codecs=opus',
-    continuous: true,
-    interim_results: false
-};
-
-function onVoiceMessage(msg){
-    var chatId = msg.chat.id;
-    telegramBot.getFileLink(msg.voice.file_id).then(function(link){
-        //setup new recognizer stream
-        var recognizeStream = speech_to_text.createRecognizeStream(params);
-        recognizeStream.setEncoding('utf8');
-        recognizeStream.on('results', function(data){
-        if(data && data.results && data.results.length>0 && data.results[0].alternatives && data.results[0].alternatives.length>0){
-            var result = data.results[0].alternatives[0].transcript;
-            console.log("result: ", result);
-            //send speech recognizer result back to chat
-            telegramBot.sendMessage(chatId, result, {
-                disable_notification: true,
-                reply_to_message_id: msg.message_id
-            }).then(function () {
-                // reply sent!
-            });
-        }
-    });
-
-    ['data', 'error', 'connection-close'].forEach(function(eventName){
-    	recognizeStream.on(eventName, console.log.bind(console, eventName + ' event: '));
-    });
-    
-    //pipe voice message to recognizer -> send to watson
-    request(link).pipe(recognizeStream);
- });
 }
 
 app.listen(config.system.port, config.system.host);

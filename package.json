@@ -21,8 +21,7 @@
 		"bluebird": "^3.4.6",
 		"ibm_db": "~1.0.0",
 		"tmp": "^0.0.29",
-	    "fluent-ffmpeg": "2.1.0",
-		"node-telegram-bot-api": "0.24.0"
+	    "fluent-ffmpeg": "2.1.0"
 	},
 	"repository": {},
 	"engines": {
